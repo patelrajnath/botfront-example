@@ -64,7 +64,8 @@ class MultilingualResponse(object):
                 # if language detection fails (ie detects other than languages listed in the response)
                 # fallback to English
                 responses = mling_response[default_lang]
-                final_response = self.random_response(responses)
+                response_english = self.random_response(responses)
+                final_response = GoogleTranslator(source='en', target=lang).translate(response_english)
         except:
             final_response = None
         return final_response
@@ -87,6 +88,7 @@ class ActionLanguageSelect(Action):
         intent = tracker.latest_message['intent'].get('name')
         input_text = tracker.latest_message['text']
         lang = language_detection.predict_lang(input_text)
+        logger.info('Predicted language is:{}'.format(lang))
         response = multilingual_response.predict_response(intent=intent, lang=lang)
         if response:
             logger.info('Multilingual Response:{0}'.format(response))
@@ -106,5 +108,7 @@ class ActionLanguageSelect(Action):
                         # Change the language from 'zh' to 'zh-cn', as google translate is not supported with zh
                         lang = "{}-cn".format(lang)
                     response_translated = GoogleTranslator(source='en', target=lang).translate(response_default)
+                    logger.info('Translated response is:{0} in language:{1}, '
+                                'for the english response:{2}'.format(response_translated, lang, response_default))
                     dispatcher.utter_message(text=response_translated)
         return []
